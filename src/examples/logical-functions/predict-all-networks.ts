@@ -24,5 +24,6 @@ let network: NeuralNetwork;
 
 network = new NeuralNetwork(network_config);
 network.trainingName = XOR_TRAINING;
+network.showLogs = true;
 network.loadTraining();
 testNetwork(network, XOR_DATA);

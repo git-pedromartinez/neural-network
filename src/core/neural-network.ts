@@ -9,12 +9,18 @@ import { ActivationFunctions } from "./activation-functions";
 import {
   ActivationFunction,
   ActivationFunctionDerivative,
+  InputData,
   Matrix,
+  NetworkMetaData,
   NeuralNetworkConfig,
   NeuralNetworkData,
+  TrainingHistory,
   TrainingNetworkData,
 } from "../models";
-import { NetworkStorageManager } from "../utils";
+import { StorageManager } from "../utils";
+
+export const NetworkStore = new StorageManager<TrainingNetworkData>();
+export const NetworkHistoryStore = new StorageManager<TrainingHistory>();
 
 export class NeuralNetwork {
   private layers: Layer[];
@@ -55,6 +61,15 @@ export class NeuralNetwork {
     this._showLogs = value;
   }
 
+  private metaData: NetworkMetaData = {};
+  /**
+   * Experimental feature: simulator
+   */
+  private trainingHistory: TrainingHistory = {
+    metaData: this.metaData,
+    epochs: [],
+  };
+
   constructor({
     sizes,
     learningRate,
@@ -62,6 +77,13 @@ export class NeuralNetwork {
     activationFunction = ActivationFunctions.sigmoid,
     activationDerivative = ActivationFunctions.sigmoidDerivative,
   }: NeuralNetworkConfig) {
+    this.metaData = {
+      sizes,
+      learningRate,
+      epochs,
+      activationFunction,
+      activationDerivative,
+    };
     this.layers = [];
     for (let i = 1; i < sizes.length; i++) {
       this.layers.push(
@@ -83,14 +105,38 @@ export class NeuralNetwork {
     const targets: Matrix<"2D"> = TrainingNetworkData.map((d) => d.targets);
 
     for (let epoch = 0; epoch < this.epochs; epoch++) {
+      // Inicializa los datos de la época
+      const epochData: InputData = [];
+
       inputs.forEach((input, index) => {
-        this.backward(input, targets[index]);
+        const outputs = this.forward(input);
+        const inputData = {
+          input,
+          data: {
+            targents: targets[index],
+            outputs: outputs[outputs.length - 1],
+            errors: [],
+            weights: this.layers.map((layer) =>
+              layer.neurons.map((neuron) => [...neuron.weights])
+            ),
+            biases: this.layers.map((layer) =>
+              layer.neurons.map((neuron) => neuron.bias)
+            ),
+            gradients: [],
+          },
+        };
+
+        this.backward(input, targets[index], inputData.data);
+        epochData.push(inputData);
       });
+
+      this.trainingHistory.epochs.push(epochData);
     }
     this.log(`Training completed after ${this.epochs} epochs.`);
+    this.saveTrainingHistory();
   }
 
-  private backward(inputs: number[], targets: number[]): void {
+  private backward(inputs: number[], targets: number[], inputData: any): void {
     const outputs: Matrix<"2D"> = this.forward(inputs);
     const outputErrors: number[] = targets.map(
       (t, i) => t - outputs[outputs.length - 1][i]
@@ -103,9 +149,12 @@ export class NeuralNetwork {
         outputs[i],
         outputs[i + 1],
         errors[i],
-        this.errorThreshold
+        this.errorThreshold,
+        inputData
       );
     }
+
+    inputData.errors.push(errors);
   }
 
   private forward(inputs: number[]): Matrix<"2D"> {
@@ -121,8 +170,10 @@ export class NeuralNetwork {
     inputs: number[],
     outputs: number[],
     errors: number[],
-    epsilon: number // Error threshold
+    epsilon: number, // Error threshold
+    epochData: any
   ): void {
+    const layerGradients: number[][] = [];
     layer.neurons.forEach((neuron, i) => {
       // Check if the error is greater than epsilon
       if (Math.abs(errors[i]) > epsilon) {
@@ -136,12 +187,26 @@ export class NeuralNetwork {
         neuron.weights = neuron.weights.map(
           (weight, j) => weight + inputs[j] * gradient
         );
+        layerGradients.push(neuron.weights);
       } else {
-        // this.log(
-        //   `The error ${errors[i]} is less than the epsilon threshold (${epsilon}), no weights or bias adjustments for neuron ${neuron.identifier}.`
-        // );
+        this.log(
+          `The error ${Math.abs(
+            errors[i]
+          )} is less than the epsilon threshold (${epsilon}), no weights or bias adjustments for neuron ${
+            neuron.identifier
+          }.`
+        );
       }
     });
+    epochData.gradients.push(layerGradients);
+
+    // Actualiza los pesos y sesgos en el historial
+    epochData.weights = this.layers.map((layer) =>
+      layer.neurons.map((neuron) => [...neuron.weights])
+    );
+    epochData.biases = this.layers.map((layer) =>
+      layer.neurons.map((neuron) => neuron.bias)
+    );
   }
 
   private calculateErrors(outputErrors: number[]): Matrix<"2D"> {
@@ -165,7 +230,13 @@ export class NeuralNetwork {
   }
 
   public saveTraining(): void {
+    this.metaData = {
+      ...this.metaData,
+      errorThreshold: this.errorThreshold,
+      trainingName: this.trainingName,
+    };
     const TrainingNetworkData: TrainingNetworkData = {
+      metaData: this.metaData, // Añadir esta línea
       weights: this.layers.map((layer) =>
         layer.neurons.map((neuron) => [...neuron.weights])
       ),
@@ -173,17 +244,15 @@ export class NeuralNetwork {
         layer.neurons.map((neuron) => neuron.bias)
       ),
     };
-    // Save the training to a JSON file
-    NetworkStorageManager.showLogs = this.showLogs;
-    NetworkStorageManager.saveObject(TrainingNetworkData, this.trainingName);
+    NetworkStore.showLogs = this.showLogs;
+    NetworkStore.saveObject(TrainingNetworkData, this.trainingName);
     this.log("Training saved successfully.");
   }
 
   public loadTraining(): boolean {
-    // Load the training from a JSON file
-    NetworkStorageManager.showLogs = this.showLogs;
+    NetworkStore.showLogs = this.showLogs;
     const TrainingNetworkData: TrainingNetworkData | undefined =
-      NetworkStorageManager.loadObject(this.trainingName);
+      NetworkStore.loadObject(this.trainingName);
     if (!TrainingNetworkData) {
       this.log(`Training was not loaded.`);
       return false;
@@ -196,8 +265,26 @@ export class NeuralNetwork {
       });
     });
 
+    this.metaData = TrainingNetworkData.metaData; // Añadir esta línea
     this.log(`Training loaded successfully.`);
     return true;
+  }
+
+  /**
+   * Experimental feature: simulator
+   */
+  private saveTrainingHistory(): void {
+    this.trainingHistory.metaData = {
+      ...this.metaData,
+      errorThreshold: this.errorThreshold,
+      trainingName: this.trainingName,
+    };
+    NetworkHistoryStore.showLogs = this.showLogs;
+    NetworkHistoryStore.saveObject(
+      this.trainingHistory,
+      `${this.trainingName}_history`
+    );
+    this.log("Training history saved successfully.");
   }
 
   public log(...messages: any[]): void {

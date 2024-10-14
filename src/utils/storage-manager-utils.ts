@@ -6,7 +6,6 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { TrainingNetworkData } from "../models";
 
 export class StorageManager<T> {
   private filePath: string;
@@ -81,5 +80,3 @@ export class StorageManager<T> {
     }
   }
 }
-
-export const NetworkStorageManager = new StorageManager<TrainingNetworkData>();

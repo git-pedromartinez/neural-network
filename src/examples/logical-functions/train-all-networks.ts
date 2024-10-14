@@ -31,5 +31,6 @@ let network: NeuralNetwork;
 network = new NeuralNetwork({ ...network_config, learningRate: 0.15 });
 network.trainingName = XOR_TRAINING;
 network.errorThreshold = errorThreshold;
+// network.showLogs = true;
 network.train(XOR_DATA);
 network.saveTraining();

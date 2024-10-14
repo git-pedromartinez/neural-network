@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Neural Network Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+      .node {
+        fill: #87ceeb; /* Light blue color for neurons */
+        stroke: #4682b4; /* Darker blue stroke */
+        stroke-width: 1.5px;
+      }
+      .link {
+        stroke: #999;
+        stroke-opacity: 0.6;
+      }
+      .label {
+        font-size: 10px;
+        text-anchor: middle;
+        fill: #000; /* Black color for text */
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <label for="epochRange">Epoch:</label>
+      <input type="range" id="epochRange" min="0" max="0" value="0" />
+      <span id="epochValue">0</span>
+    </div>
+    <div>
+      <label for="inputRange">Input:</label>
+      <input type="range" id="inputRange" min="0" max="0" value="0" />
+      <span id="inputValue">0</span>
+    </div>
+    <div>
+      <p>Inputs: <span id="inputs"></span></p>
+      <p>Outputs: <span id="outputs"></span></p>
+    </div>
+    <script>
+      let data;
+      fetch("XOR_TRAINING_HISTORY.json")
+        .then((response) => response.json())
+        .then((json) => {
+          data = json;
+          initialize();
+        });
+
+      const width = 960;
+      const height = 500;
+
+      const svg = d3
+        .select("body")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
+
+      function initialize() {
+        const epochRange = document.getElementById("epochRange");
+        const inputRange = document.getElementById("inputRange");
+        const epochValue = document.getElementById("epochValue");
+        const inputValue = document.getElementById("inputValue");
+
+        epochRange.max = data.epochs.length - 1;
+        inputRange.max = data.epochs[0].length - 1;
+
+        epochRange.addEventListener("input", () => {
+          epochValue.textContent = epochRange.value;
+          inputRange.max = data.epochs[epochRange.value].length - 1;
+          inputRange.value = 0;
+          inputValue.textContent = 0;
+          updateVisualization();
+        });
+
+        inputRange.addEventListener("input", () => {
+          inputValue.textContent = inputRange.value;
+          updateVisualization();
+        });
+
+        updateVisualization();
+      }
+
+      function updateVisualization() {
+        const epoch = document.getElementById("epochRange").value;
+        const inputIndex = document.getElementById("inputRange").value;
+        const inputData = data.epochs[epoch][inputIndex];
+        const sizes = data.metaData.sizes.slice(1);
+
+        document.getElementById("inputs").textContent =
+          inputData.input.join(", ");
+        document.getElementById("outputs").textContent =
+          inputData.data.outputs.join(", ");
+
+        svg.selectAll("*").remove();
+
+        const xScale = d3
+          .scaleLinear()
+          .domain([0, sizes.length - 1])
+          .range([50, width - 50]);
+
+        sizes.forEach((neurons, layerIndex) => {
+          const yScale = d3
+            .scaleLinear()
+            .domain([0, neurons - 1])
+            .range([50, height - 50]);
+
+          for (let neuronIndex = 0; neuronIndex < neurons; neuronIndex++) {
+            const neuronGroup = svg
+              .append("g")
+              .attr(
+                "transform",
+                `translate(${xScale(layerIndex)}, ${yScale(neuronIndex)})`
+              );
+
+            neuronGroup.append("circle").attr("r", 20).attr("class", "node");
+
+            if (
+              inputData.data.biases[layerIndex] &&
+              inputData.data.biases[layerIndex][neuronIndex] !== undefined
+            ) {
+              neuronGroup
+                .append("text")
+                .attr("dy", -10)
+                .attr("class", "label")
+                .text(
+                  `B: ${inputData.data.biases[layerIndex][neuronIndex].toFixed(
+                    2
+                  )}`
+                );
+            }
+
+            if (
+              inputData.data.weights[layerIndex] &&
+              inputData.data.weights[layerIndex][neuronIndex] !== undefined
+            ) {
+              neuronGroup
+                .append("text")
+                .attr("dy", 10)
+                .attr("class", "label")
+                .text(
+                  `W: ${inputData.data.weights[layerIndex][neuronIndex]
+                    .map((w) => w.toFixed(2))
+                    .join(", ")}`
+                );
+            }
+          }
+        });
+
+        for (let i = 0; i < sizes.length - 1; i++) {
+          const yScaleCurrent = d3
+            .scaleLinear()
+            .domain([0, sizes[i] - 1])
+            .range([50, height - 50]);
+
+          const yScaleNext = d3
+            .scaleLinear()
+            .domain([0, sizes[i + 1] - 1])
+            .range([50, height - 50]);
+
+          for (let j = 0; j < sizes[i]; j++) {
+            for (let k = 0; k < sizes[i + 1]; k++) {
+              svg
+                .append("line")
+                .attr("x1", xScale(i))
+                .attr("y1", yScaleCurrent(j))
+                .attr("x2", xScale(i + 1))
+                .attr("y2", yScaleNext(k))
+                .attr("class", "link");
+            }
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
