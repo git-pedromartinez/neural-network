@@ -166,9 +166,9 @@ export class NeuralNetwork {
     this.log(`Training completed after ${this.epochs} epochs.`);
   }
 
-  private backward(inputs: number[], targets: number[]): void {
+  private backward(inputs: Matrix, targets: Matrix): void {
     const outputs: Matrix<"2D"> = this.forward(inputs);
-    const outputErrors: number[] = targets.map(
+    const outputErrors: Matrix = targets.map(
       (t, i) => t - outputs[outputs.length - 1][i]
     );
     const errors: Matrix<"2D"> = this.calculateErrors(outputErrors);
@@ -184,7 +184,7 @@ export class NeuralNetwork {
     }
   }
 
-  private forward(inputs: number[]): Matrix<"2D"> {
+  private forward(inputs: Matrix): Matrix<"2D"> {
     const outputs: Matrix<"2D"> = [inputs];
     for (const layer of this.layers) {
       outputs.push(layer.forward(outputs[outputs.length - 1]));
@@ -194,9 +194,9 @@ export class NeuralNetwork {
 
   private adjustWeights(
     layer: Layer,
-    inputs: number[],
-    outputs: number[],
-    errors: number[],
+    inputs: Matrix,
+    outputs: Matrix,
+    errors: Matrix,
     epsilon: number // Error threshold
   ): void {
     layer.neurons.forEach((neuron, i) => {
@@ -220,12 +220,12 @@ export class NeuralNetwork {
     });
   }
 
-  private calculateErrors(outputErrors: number[]): Matrix<"2D"> {
+  private calculateErrors(outputErrors: Matrix): Matrix<"2D"> {
     const errors: Matrix<"2D"> = [outputErrors];
     for (let i = this.layers.length - 1; i > 0; i--) {
       const layer: Layer = this.layers[i];
       const previousLayer: Layer = this.layers[i - 1];
-      const hiddenErrors: number[] = previousLayer.neurons.map((neuron, j) =>
+      const hiddenErrors: Matrix = previousLayer.neurons.map((neuron, j) =>
         errors[0].reduce(
           (sum, error, k) => sum + error * layer.neurons[k].weights[j],
           0
@@ -236,7 +236,7 @@ export class NeuralNetwork {
     return errors;
   }
 
-  predict(inputs: number[]): number[] {
+  predict(inputs: Matrix): Matrix {
     return this.forward(inputs)[this.layers.length];
   }
 

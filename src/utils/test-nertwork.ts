@@ -5,7 +5,7 @@
  */
 
 import { NeuralNetwork } from "../core";
-import { TestingNetworkData } from "../models";
+import { Matrix, TestingNetworkData } from "../models";
 
 export function testNetwork(
   network: NeuralNetwork,
@@ -13,8 +13,12 @@ export function testNetwork(
 ): void {
   console.log(`\nTesting of ${network.trainingName}:`);
   testingNetworkData.forEach((data) => {
-    const output: number[] = network.predict(data.inputs);
-    console.log("Inputs:",data.inputs,"Output:",output.map((o) => parseFloat(o.toFixed(2)))
+    const output: Matrix = network.predict(data.inputs);
+    console.log(
+      "Inputs:",
+      data.inputs,
+      "Output:",
+      output.map((o) => parseFloat(o.toFixed(2)))
     );
   });
 }

@@ -5,11 +5,15 @@
  */
 
 import { ActivationFunctions } from "./activation-functions";
-import { ActivationFunction, ActivationFunctionDerivative } from "../models";
+import {
+  ActivationFunction,
+  ActivationFunctionDerivative,
+  Matrix,
+} from "../models";
 
 export class Neuron {
   identifier: string;
-  weights: number[];
+  weights: Matrix;
   bias: number;
   activationFunction: ActivationFunction;
   activationDerivative: ActivationFunctionDerivative;
@@ -27,7 +31,7 @@ export class Neuron {
     this.activationDerivative = activationDerivative;
   }
 
-  activate(inputs: number[]): number {
+  activate(inputs: Matrix): number {
     const weightedSum: number = inputs.reduce(
       (sum, input, index) => sum + input * this.weights[index],
       this.bias

@@ -5,7 +5,11 @@
  */
 
 import { Neuron } from "./neuron";
-import { ActivationFunction, ActivationFunctionDerivative } from "../models";
+import {
+  ActivationFunction,
+  ActivationFunctionDerivative,
+  Matrix,
+} from "../models";
 
 export class Layer {
   neurons: Neuron[];
@@ -31,7 +35,7 @@ export class Layer {
     );
   }
 
-  forward(inputs: number[]): number[] {
+  forward(inputs: Matrix): Matrix {
     return this.neurons.map((neuron) => neuron.activate(inputs));
   }
 }
