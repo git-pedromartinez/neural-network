@@ -12,15 +12,15 @@ import { testNetwork } from "../../utils";
 
 let network: NeuralNetwork;
 
-network = new NeuralNetwork(network_config);
-network.trainingName = AND_TRAINING;
-network.loadTraining();
-testNetwork(network, AND_DATA);
+// network = new NeuralNetwork(network_config);
+// network.trainingName = AND_TRAINING;
+// network.loadTraining();
+// testNetwork(network, AND_DATA);
 
-network = new NeuralNetwork(network_config);
-network.trainingName = OR_TRAINING;
-network.loadTraining();
-testNetwork(network, OR_DATA);
+// network = new NeuralNetwork(network_config);
+// network.trainingName = OR_TRAINING;
+// network.loadTraining();
+// testNetwork(network, OR_DATA);
 
 network = new NeuralNetwork(network_config);
 network.trainingName = XOR_TRAINING;

@@ -16,17 +16,17 @@ import {
 
 let network: NeuralNetwork;
 
-network = new NeuralNetwork(network_config);
-network.trainingName = AND_TRAINING;
-network.errorThreshold = errorThreshold;
-network.train(AND_DATA);
-network.saveTraining();
+// network = new NeuralNetwork(network_config);
+// network.trainingName = AND_TRAINING;
+// network.errorThreshold = errorThreshold;
+// network.train(AND_DATA);
+// network.saveTraining();
 
-network = new NeuralNetwork(network_config);
-network.trainingName = OR_TRAINING;
-network.errorThreshold = errorThreshold;
-network.train(OR_DATA);
-network.saveTraining();
+// network = new NeuralNetwork(network_config);
+// network.trainingName = OR_TRAINING;
+// network.errorThreshold = errorThreshold;
+// network.train(OR_DATA);
+// network.saveTraining();
 
 network = new NeuralNetwork({ ...network_config, learningRate: 0.15 });
 network.trainingName = XOR_TRAINING;
