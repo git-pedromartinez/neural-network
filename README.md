@@ -12,17 +12,19 @@ Ensure you have the following software installed:
 - npm v10.8.2
 
 You can check your versions by running:
-node --version
-npm --version
+`node --version`
+`npm --version`
 
 ## Installation
 
 1. Clone the repository:
-   git clone https://github.com/git-pedromartinez/neural-network.git
-   cd neural-network
+
+   `git clone https://github.com/git-pedromartinez/neural-network.git`
+
+   `cd neural-network`
 
 2. Install the required libraries:
-   npm install
+   `npm install`
 
 ## Running the Scripts
 
@@ -31,12 +33,12 @@ Navigate to the folder `./src/examples/logical-functions/`
 ### Training the Networks
 
 To train the neural networks, run:
-npx ts-node ./train-all-networks.ts
+`npx ts-node ./train-all-networks.ts`
 
 ### Predicting with the Networks
 
 To make predictions using the trained networks, run:
-npx ts-node ./predict-all-networks.ts
+`npx ts-node ./predict-all-networks.ts`
 
 ### Expected Results
 
