@@ -6,7 +6,6 @@
 
 import * as fs from "fs";
 import * as path from "path";
-import { TrainingNetworkData } from "../models";
 
 export class StorageManager<T> {
   private filePath: string;
@@ -31,7 +30,11 @@ export class StorageManager<T> {
     );
   }
 
-  public saveObject(obj: T, fileName: string, formatted: boolean = false): void {
+  public saveObject(
+    obj: T,
+    fileName: string,
+    formatted: boolean = false
+  ): void {
     // Convert the object to a JSON string with or without pretty-printing based on the formatted parameter
     const jsonData = formatted
       ? JSON.stringify(obj, null, 2)
@@ -78,11 +81,9 @@ export class StorageManager<T> {
     }
   }
 
-  public log(...messages: any[]): void {
+  private log(...messages: any[]): void {
     if (this.showLogs) {
       console.log(...messages);
     }
   }
 }
-
-export const NetworkStorageManager = new StorageManager<TrainingNetworkData>();

@@ -10,16 +10,21 @@ import {
   ActivationFunction,
   ActivationFunctionDerivative,
   Matrix,
+  NetworkMetadata,
+  NetworkSimulatorConfig,
   NeuralNetworkConfig,
   NeuralNetworkData,
   TrainingNetworkData,
 } from "../models";
-import { NetworkStorageManager } from "../utils";
+import { StorageManager } from "../utils";
+
+const NetworkStore = new StorageManager<TrainingNetworkData>();
+const NetworkHistoryStore = new StorageManager<NetworkSimulatorConfig>();
 
 export class NeuralNetwork {
-  private layers: Layer[];
-  private learningRate: number;
-  private epochs: number;
+  private layers!: Layer[];
+  private learningRate!: number;
+  private epochs!: number;
 
   /**
    * @variable `_trainingName` defines the name of the training, this name is used to save and load the training in the training history
@@ -55,6 +60,11 @@ export class NeuralNetwork {
     this._showLogs = value;
   }
 
+  /**
+   * Experimental feature: simulator
+   */
+  private metaData: NetworkMetadata = {};
+
   constructor({
     sizes,
     learningRate,
@@ -62,20 +72,86 @@ export class NeuralNetwork {
     activationFunction = ActivationFunctions.sigmoid,
     activationDerivative = ActivationFunctions.sigmoidDerivative,
   }: NeuralNetworkConfig) {
-    this.layers = [];
-    for (let i = 1; i < sizes.length; i++) {
-      this.layers.push(
-        new Layer(
-          sizes[i],
-          sizes[i - 1],
-          activationFunction,
-          activationDerivative,
-          `Layer[${i}]`
-        )
-      );
+    const config: NeuralNetworkConfig = {
+      sizes,
+      learningRate,
+      epochs,
+      activationFunction,
+      activationDerivative,
+    };
+
+    this.updateMetaData(config);
+    this.loadNetworkConfig(config);
+  }
+
+  /**
+   * Experimental feature: simulator
+   */
+  private loadNetworkConfig(
+    config?: NeuralNetworkConfig | NetworkMetadata
+  ): void {
+    if (
+      config?.sizes?.length &&
+      config?.sizes?.length > 1 &&
+      config?.learningRate &&
+      config?.epochs
+    ) {
+      this.layers = [];
+      for (let i = 1; i < config.sizes.length; i++) {
+        this.layers.push(
+          new Layer(
+            config.sizes[i],
+            config.sizes[i - 1],
+            config.activationFunction!,
+            config.activationDerivative!,
+            `Layer[${i}]`
+          )
+        );
+      }
+      this.learningRate = config.learningRate;
+      this.epochs = config.epochs;
+      if ((config as NetworkMetadata)?.trainingName !== undefined) {
+        this.trainingName = (config as NetworkMetadata)?.trainingName!;
+      }
+      if ((config as NetworkMetadata)?.errorThreshold !== undefined) {
+        this.errorThreshold = (config as NetworkMetadata).errorThreshold!;
+      }
+    } else {
+      this.log("Invalid network configuration:", config);
+      if (!(config?.sizes?.length && config.sizes.length > 1)) {
+        this.log(
+          "Please provide a sizes valid setting. current:",
+          config?.sizes
+        );
+      }
+      if (!config?.learningRate) {
+        this.log(
+          "Please provide a learningRate valid setting. current:",
+          config?.learningRate
+        );
+      }
+      if (!config?.epochs) {
+        this.log(
+          "Please provide a epochs valid setting. current:",
+          config?.epochs
+        );
+      }
     }
-    this.learningRate = learningRate;
-    this.epochs = epochs;
+  }
+
+  /**
+   * Experimental feature: simulator
+   */
+  private updateMetaData(
+    metaData?: NeuralNetworkConfig | NetworkMetadata
+  ): void {
+    this.metaData = {
+      ...this.metaData,
+      ...metaData,
+      trainingName: this.trainingName,
+      errorThreshold: this.errorThreshold,
+    };
+    this.log("Network metadata updated:", this.metaData);
   }
 
   train(TrainingNetworkData: NeuralNetworkData[]): void {
@@ -165,7 +241,9 @@ export class NeuralNetwork {
   }
 
   public saveTraining(): void {
+    this.updateMetaData();
     const TrainingNetworkData: TrainingNetworkData = {
+      metaData: this.metaData,
       weights: this.layers.map((layer) =>
         layer.neurons.map((neuron) => [...neuron.weights])
       ),
@@ -174,20 +252,23 @@ export class NeuralNetwork {
       ),
     };
     // Save the training to a JSON file
-    NetworkStorageManager.showLogs = this.showLogs;
-    NetworkStorageManager.saveObject(TrainingNetworkData, this.trainingName);
+    NetworkStore.showLogs = this.showLogs;
+    NetworkStore.saveObject(TrainingNetworkData, this.trainingName);
     this.log("Training saved successfully.");
   }
 
   public loadTraining(): boolean {
     // Load the training from a JSON file
-    NetworkStorageManager.showLogs = this.showLogs;
+    NetworkStore.showLogs = this.showLogs;
     const TrainingNetworkData: TrainingNetworkData | undefined =
-      NetworkStorageManager.loadObject(this.trainingName);
+      NetworkStore.loadObject(this.trainingName);
     if (!TrainingNetworkData) {
       this.log(`Training was not loaded.`);
       return false;
     }
+
+    this.updateMetaData(TrainingNetworkData.metaData);
+    this.loadNetworkConfig(TrainingNetworkData.metaData);
 
     this.layers.forEach((layer, i) => {
       layer.neurons.forEach((neuron, j) => {
@@ -200,7 +281,7 @@ export class NeuralNetwork {
     return true;
   }
 
-  public log(...messages: any[]): void {
+  private log(...messages: any[]): void {
     if (this.showLogs) {
       console.log(...messages);
     }
