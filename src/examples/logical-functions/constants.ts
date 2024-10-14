@@ -4,7 +4,7 @@
  * Position: Senior Software Engineer
  */
 
-export const layers = [2, 300, 1];
+export const layers = [2, 3, 1];
 export const learningRate = 0.1;
 export const epochs = 10000;
 export const errorThreshold = 0.001;
