@@ -31,8 +31,11 @@ export class StorageManager<T> {
     );
   }
 
-  public saveObject(obj: T, fileName: string): void {
-    const jsonData = JSON.stringify(obj, null, 2);
+  public saveObject(obj: T, fileName: string, formatted: boolean = false): void {
+    // Convert the object to a JSON string with or without pretty-printing based on the formatted parameter
+    const jsonData = formatted
+      ? JSON.stringify(obj, null, 2)
+      : JSON.stringify(obj);
 
     if (this.isNode()) {
       const fullPath = path.join(this.filePath, `${fileName}.json`);
