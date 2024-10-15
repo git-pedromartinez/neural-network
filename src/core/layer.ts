@@ -13,25 +13,20 @@ import {
 
 export class Layer {
   neurons: Neuron[];
-  identifier: string;
+  identifier: number;
 
   constructor(
     numNeurons: number,
     inputSize: number,
     activationFunction: ActivationFunction,
     activationDerivative: ActivationFunctionDerivative,
-    identifier: string = "Layer"
+    identifier: number
   ) {
     this.identifier = identifier;
     this.neurons = Array.from(
       { length: numNeurons },
       (n, i) =>
-        new Neuron(
-          inputSize,
-          activationFunction,
-          activationDerivative,
-          `${identifier},Neuron[${i}]`
-        )
+        new Neuron(inputSize, activationFunction, activationDerivative, [identifier, i])
     );
   }
 

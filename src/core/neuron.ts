@@ -12,7 +12,7 @@ import {
 } from "../models";
 
 export class Neuron {
-  identifier: string;
+  identifier: Matrix;
   weights: Matrix;
   bias: number;
   activationFunction: ActivationFunction;
@@ -22,7 +22,7 @@ export class Neuron {
     inputSize: number,
     activationFunction: ActivationFunction = ActivationFunctions.sigmoid,
     activationDerivative: ActivationFunctionDerivative = ActivationFunctions.sigmoidDerivative,
-    identifier: string = "Neuron"
+    identifier: Matrix
   ) {
     this.identifier = identifier;
     this.weights = Array.from({ length: inputSize }, () => Math.random() - 0.5);

@@ -104,7 +104,7 @@ export class NeuralNetwork {
             config.sizes[i - 1],
             config.activationFunction!,
             config.activationDerivative!,
-            `Layer[${i}]`
+            i
           )
         );
       }
@@ -214,7 +214,7 @@ export class NeuralNetwork {
         );
       } else {
         // this.log(
-        //   `The error ${errors[i]} is less than the epsilon threshold (${epsilon}), no weights or bias adjustments for neuron ${neuron.identifier}.`
+        //   `The error ${Math.abs(errors[i])} is less than the epsilon threshold (${epsilon}), no weights or bias adjustments for neuron ${neuron.identifier}.`
         // );
       }
     });
