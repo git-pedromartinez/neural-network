@@ -8,9 +8,10 @@ import {
   ActivationFunction,
   ActivationFunctionDerivative,
 } from "./activation-functions.models";
+import { Matrix } from "./matrix.models";
 
 export interface NeuralNetworkConfig {
-  sizes: number[];
+  sizes: Matrix;
   learningRate: number;
   epochs: number;
   activationFunction?: ActivationFunction;
