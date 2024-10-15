@@ -10,6 +10,7 @@ profiler.startProfiling("CPU Profile", true);
 // Your code here (e.g., training the neural network)
 const startTime: Date = new Date();
 const network = new NeuralNetwork(network_config);
+network.saveHistory = true;
 network.trainingName = XOR_TRAINING;
 network.errorThreshold = 0.001;
 network.showLogs = true;

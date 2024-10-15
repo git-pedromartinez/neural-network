@@ -1,5 +1,5 @@
 export const network_config = {
-  sizes: [2, 300, 1],
+  sizes: [2, 3, 1],
   learningRate: 0.15,
   epochs: 10000,
 };
