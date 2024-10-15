@@ -27,8 +27,8 @@ export function createNetwork() {
   // network.showLogs = true;
 
   //Training
-  network.train(AND_DATA);
-  network.saveTraining();
+  // network.train(AND_DATA);
+  // network.saveTraining();
 
   //Testing
   network.loadTraining();
