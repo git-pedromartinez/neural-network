@@ -15,8 +15,10 @@ let network = new NeuralNetwork({
 });
 network.trainingName = "XOR_TRAINING";
 network.errorThreshold = 0.001;
+network.saveHistory = true;
 
 //Train the network
+network.loadTraining();
 network.train(XOR_DATA);
 network.saveTraining();
 
