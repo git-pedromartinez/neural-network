@@ -19,9 +19,11 @@ import {
 import { StorageManager } from "../utils";
 
 const NetworkStore = new StorageManager<TrainingNetworkData>();
-const NetworkHistoryStore = new StorageManager<NetworkSimulatorConfig>();
+const NetworkHistoryStore = new StorageManager<any[]>();
 
 export class NeuralNetwork {
+  private history: any[] = [];
+
   private layers!: Layer[];
   private learningRate!: number;
   private epochs!: number;
@@ -64,6 +66,8 @@ export class NeuralNetwork {
    * Experimental feature: simulator
    */
   private metaData: NetworkMetadata = {};
+
+  public saveHistory: boolean = false;
 
   constructor({
     sizes,
@@ -160,13 +164,21 @@ export class NeuralNetwork {
 
     for (let epoch = 0; epoch < this.epochs; epoch++) {
       inputs.forEach((input, index) => {
-        this.backward(input, targets[index]);
+        this.backward(epoch, input, targets[index]);
       });
     }
     this.log(`Training completed after ${this.epochs} epochs.`);
+
+    if (this.saveHistory) {
+      NetworkHistoryStore.showLogs = this.showLogs;
+      NetworkHistoryStore.saveObject(
+        this.history,
+        this.trainingName + "_history"
+      );
+    }
   }
 
-  private backward(inputs: Matrix, targets: Matrix): void {
+  private backward(epoch: number, inputs: Matrix, targets: Matrix): void {
     const outputs: Matrix<"2D"> = this.forward(inputs);
     const outputErrors: Matrix = targets.map(
       (t, i) => t - outputs[outputs.length - 1][i]
@@ -175,6 +187,7 @@ export class NeuralNetwork {
 
     for (let i = this.layers.length - 1; i >= 0; i--) {
       this.adjustWeights(
+        epoch,
         this.layers[i],
         outputs[i],
         outputs[i + 1],
@@ -193,6 +206,7 @@ export class NeuralNetwork {
   }
 
   private adjustWeights(
+    epoch: number,
     layer: Layer,
     inputs: Matrix,
     outputs: Matrix,
@@ -216,6 +230,36 @@ export class NeuralNetwork {
         // this.log(
         //   `The error ${Math.abs(errors[i])} is less than the epsilon threshold (${epsilon}), no weights or bias adjustments for neuron ${neuron.identifier}.`
         // );
+      }
+
+      //Experimental feature: simulator
+      if (this.saveHistory) {
+        const data = {
+          epoch,
+          identifier: neuron.identifier,
+          adjustWeights: {
+            error: Math.abs(errors[i]),
+            epsilon,
+            value: Math.abs(errors[i]) > epsilon,
+          },
+          gradient: {
+            error: errors[i],
+            activationDerivative: neuron.activationDerivative(outputs[i]),
+            learningRate: this.learningRate,
+            value:
+              errors[i] *
+              neuron.activationDerivative(outputs[i]) *
+              this.learningRate,
+          },
+          weights: neuron.weights.map((e) => e),
+          bias: neuron.bias,
+          inputs,
+          outputs,
+        };
+        // if (Math.abs(errors[i]) > epsilon) {
+        //   this.log(data);
+        // }
+        this.history.push(data);
       }
     });
   }
@@ -266,9 +310,6 @@ export class NeuralNetwork {
       this.log(`Training was not loaded.`);
       return false;
     }
-
-    this.updateMetaData(TrainingNetworkData.metaData);
-    this.loadNetworkConfig(TrainingNetworkData.metaData);
 
     this.layers.forEach((layer, i) => {
       layer.neurons.forEach((neuron, j) => {

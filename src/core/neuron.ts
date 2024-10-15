@@ -18,6 +18,9 @@ export class Neuron {
   activationFunction: ActivationFunction;
   activationDerivative: ActivationFunctionDerivative;
 
+  public static defaultWeights?: number = undefined;
+  public static defaultBias?: number = undefined;
+
   constructor(
     inputSize: number,
     activationFunction: ActivationFunction = ActivationFunctions.sigmoid,
@@ -25,8 +28,8 @@ export class Neuron {
     identifier: Matrix
   ) {
     this.identifier = identifier;
-    this.weights = Array.from({ length: inputSize }, () => Math.random() - 0.5);
-    this.bias = Math.random() - 0.5;
+    this.weights = Array.from({ length: inputSize }, () => Neuron.defaultWeights ?? Math.random() - 0.5);
+    this.bias = Neuron.defaultBias ?? Math.random() - 0.5;
     this.activationFunction = activationFunction;
     this.activationDerivative = activationDerivative;
   }

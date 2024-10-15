@@ -28,4 +28,8 @@ export class ActivationFunctions {
   static tanhDerivative(output: number): number {
     return 1 - output * output;
   }
+
+  static binaryStep(x: number, limit = 0.5): number {
+    return x >= limit ? 1 : 0;
+  }
 }

@@ -1,0 +1,1 @@
+{"metaData":{"sizes":[2,1],"learningRate":0.5,"epochs":10,"trainingName":"and_training_optimized","errorThreshold":0},"weights":[[[0.5,0.5]]],"biases":[[-0.5]]}
